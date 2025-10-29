@@ -237,6 +237,15 @@
             display: none;
         }
         
+        .option.answered {
+            cursor: not-allowed;
+        }
+        
+        .option.answered:hover {
+            transform: none;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+        
         .option-letter {
             display: inline-flex;
             align-items: center;
@@ -552,9 +561,13 @@
                     <label for="student-class">الشعبة</label>
                     <select id="student-class">
                         <option value="">اختر الشعبة</option>
-                        <option value="علمي">علمي</option>
-                        <option value="أدبي">أدبي</option>
-                        <option value="مختلط">مختلط</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
                     </select>
                 </div>
                 <button class="start-btn" id="start-btn">
@@ -573,7 +586,7 @@
             
             <div class="question-number">
                 <i class="fas fa-question-circle"></i>
-                <span id="question-number">السؤال 1 من 50</span>
+                <span id="question-number">السؤال 1 من 5</span>
             </div>
             <div class="question-text" id="question-text"></div>
             
@@ -625,7 +638,7 @@
             </div>
             
             <div class="score-container">
-                <div class="score" id="score">0/50</div>
+                <div class="score" id="score">0/5</div>
                 <div class="score-text">درجة</div>
             </div>
             
@@ -672,7 +685,6 @@
                 correctAnswer: 0,
                 explanation: "البخار هو الحالة الغازية للمادة عندما تكون في درجة حرارة أقل من نقطة الحرجة. بخار الماء هو المثال الأكثر شيوعاً للبخار."
             }
-            // يمكن إضافة المزيد من الأسئلة هنا...
         ];
 
         // متغيرات التطبيق
@@ -682,6 +694,7 @@
         let score = 0;
         let studentName = "";
         let studentClass = "";
+        let answeredQuestions = new Set(); // لتتبع الأسئلة التي تمت الإجابة عليها
 
         // عناصر DOM
         const infoContainer = document.getElementById('info-container');
@@ -718,6 +731,7 @@
             userAnswers = new Array(questions.length).fill(null);
             currentQuestion = 0;
             score = 0;
+            answeredQuestions.clear();
             
             createFloatingElements();
         }
@@ -799,34 +813,54 @@
                 // تحديد إذا كان الخيار مختارًا
                 if (userAnswers[currentQuestion] === index) {
                     optionElement.classList.add('selected');
+                    
+                    // إضافة فئة للإجابة الصحيحة أو الخاطئة
+                    if (index === question.correctAnswer) {
+                        optionElement.classList.add('correct');
+                    } else {
+                        optionElement.classList.add('incorrect');
+                    }
+                }
+                
+                // إذا تمت الإجابة على هذا السؤال، جعل الخيارات غير قابلة للتحديد
+                if (answeredQuestions.has(currentQuestion)) {
+                    optionElement.classList.add('answered');
                 }
                 
                 const radioId = `option-${currentQuestion}-${index}`;
                 optionElement.innerHTML = `
-                    <input type="radio" id="${radioId}" name="question-${currentQuestion}" value="${index}">
+                    <input type="radio" id="${radioId}" name="question-${currentQuestion}" value="${index}" ${answeredQuestions.has(currentQuestion) ? 'disabled' : ''}>
                     <label for="${radioId}">
                         ${option}
                         <span class="option-letter">${String.fromCharCode(65 + index)}</span>
                     </label>
                 `;
                 
-                optionElement.addEventListener('click', () => selectOption(index));
+                // فقط إذا لم يتم الإجابة على السؤال، أضف مستمع الحدث
+                if (!answeredQuestions.has(currentQuestion)) {
+                    optionElement.addEventListener('click', () => selectOption(index));
+                }
+                
                 optionsContainer.appendChild(optionElement);
             });
             
-            // تحديث الشرح
-            explanationTextElement.textContent = question.explanation;
-            explanationElement.style.display = 'block';
+            // تحديث الشرح - إظهاره فقط إذا تمت الإجابة على السؤال
+            if (answeredQuestions.has(currentQuestion)) {
+                explanationTextElement.textContent = question.explanation;
+                explanationElement.style.display = 'block';
+            } else {
+                explanationElement.style.display = 'none';
+            }
             
             // تحديث حالة الأزرار
             prevButton.disabled = currentQuestion === 0;
-            nextButton.disabled = userAnswers[currentQuestion] === null;
+            nextButton.disabled = !answeredQuestions.has(currentQuestion) && userAnswers[currentQuestion] === null;
             
             // إظهار زر إنهاء الاختبار في السؤال الأخير
             if (currentQuestion === questions.length - 1) {
                 nextButton.style.display = 'none';
                 submitButton.style.display = 'flex';
-                submitButton.disabled = userAnswers[currentQuestion] === null;
+                submitButton.disabled = !answeredQuestions.has(currentQuestion);
             } else {
                 nextButton.style.display = 'flex';
                 submitButton.style.display = 'none';
@@ -847,6 +881,9 @@
             userAnswers[currentQuestion] = optionIndex;
             document.querySelectorAll('.option')[optionIndex].classList.add('selected');
             
+            // إضافة السؤال إلى مجموعة الأسئلة المجابة
+            answeredQuestions.add(currentQuestion);
+            
             // تحديث حالة الأزرار
             nextButton.disabled = false;
             if (currentQuestion === questions.length - 1) {
@@ -860,9 +897,16 @@
             // عرض التغذية الراجعة
             feedbackElement.textContent = isCorrect ? 
                 "إجابة صحيحة! أحسنت!" : 
-                "إجابة خاطئة. حاول مرة أخرى!";
+                "إجابة خاطئة. حاول مرة أخرى في السؤال التالي!";
             feedbackElement.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
             feedbackElement.style.display = 'block';
+            
+            // إظهار الشرح بعد الإجابة
+            explanationTextElement.textContent = question.explanation;
+            explanationElement.style.display = 'block';
+            
+            // إعادة تحميل السؤال لتطبيق التغييرات
+            showQuestion();
         }
 
         // الانتقال إلى السؤال التالي
@@ -937,6 +981,7 @@
             userAnswers = new Array(questions.length).fill(null);
             currentQuestion = 0;
             score = 0;
+            answeredQuestions.clear();
             
             // إعادة تعيين الواجهة
             infoContainer.style.display = 'block';
