@@ -1058,3 +1058,7 @@
         restartButton.addEventListener('click', restartQuiz);
 
         // بدء التطبيق
+        init();
+    </script>
+</body>
+</html>
