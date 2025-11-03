@@ -1,4 +1,4 @@
-# chemistry-test-for-high-school-students.
+# اختبار كيمياء لاول ثانوي
 مراجعة عامة للمادة وخواصها 
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
