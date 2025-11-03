@@ -1,5 +1,6 @@
 # اختبار كيمياء لاول ثانوي
 مراجعة عامة للمادة وخواصها 
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
